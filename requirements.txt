@@ -1,0 +1,11 @@
+pipflask_sqlalchemy
+opencv-python
+numpy
+torch
+flask
+ultralytics
+torchvision 
+onnx 
+onnxruntime 
+opencv-python-headless 
+requests

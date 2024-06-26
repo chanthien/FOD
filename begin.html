@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Object Detection API</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <header>Object Detection API</header>
+    <form action="/process" method="post">
+        <label for="input_type">Select Input Type:</label>
+        <select id="input_type" name="input_type">
+            <option value="webcam">Webcam</option>
+            <option value="ip_camera">IP Camera</option>
+            <option value="video_url">Video URL</option>
+            <option value="video_file">Video File</option>
+        </select>
+        <input type="text" id="input_data" name="input_data" placeholder="Enter input data">
+        <button type="submit">Submit</button>
+    </form>
+</body>
+
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css">
+    <!-- <style>
+        #map-container {
+            width: 100%;
+            height: 400px;
+        }
+    </style> -->
+</head>
+
+<body>
+    <div class="container">
+        <h1>Main Page</h1>
+        <div id="video-container">
+            <img id="video" src="{{ url_for('video_feed', source=request.args.get('source')) }}" alt="Video feed" />
+        </div>
+        <div id="map-container">
+            <!-- OpenMap API integration -->
+            <div id="map" class="map"></div>
+            <script>
+                var map = new ol.Map({
+                    target: 'map',
+                    layers: [
+                        new ol.layer.Tile({
+                            source: new ol.source.OSM()
+                        })
+                    ],
+                    view: new ol.View({
+                        center: ol.proj.fromLonLat([0, 0]),
+                        zoom: 5
+                    })
+                });
+
+                function updateMap(gps_data) {
+                    var vectorSource = new ol.source.Vector({
+                        features: gps_data.map(function (det) {
+                            var feature = new ol.Feature({
+                                geometry: new ol.geom.Point(ol.proj.fromLonLat([det.gps.lon, det.gps.lat])),
+                                name: det.name
+                            });
+                            feature.setStyle(new ol.style.Style({
+                                image: new ol.style.Icon({
+                                    anchor: [0.5, 1],
+                                    src: 'https://openlayers.org/en/v4.6.5/examples/data/icon.png'
+                                })
+                            }));
+                            return feature;
+                        })
+                    });
+
+                    var vectorLayer = new ol.layer.Vector({
+                        source: vectorSource
+                    });
+
+                    map.getLayers().forEach(function (layer, i) {
+                        if (i > 0) {
+                            map.removeLayer(layer);
+                        }
+                    });
+
+                    map.addLayer(vectorLayer);
+                }
+
+                async function fetchDetections() {
+                    const response = await fetch('/detect', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ source: "{{ request.args.get('source') }}" })
+                    });
+                    const data = await response.json();
+                    updateMap(data);
+                }
+
+                setInterval(fetchDetections, 3000);
+            </script>
+        </div>
+        <div id="results">
+            <h2>Detections</h2>
+            <ul id="detections-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        var socket = io();
+
+        socket.on('update', function (data) {
+            console.log('Received data:', data);
+            var list = document.getElementById('detections-list');
+            list.innerHTML = '';
+            data.forEach(function (detection) {
+                var item = document.createElement('li');
+                item.textContent = `ID: ${detection.id}, Name: ${detection.name}, GPS: (${detection.gps.lat}, ${detection.gps.lon}), Confidence: ${detection.confidence}`;
+                list.appendChild(item);
+            });
+            updateMap(data);
+        });
+
+        // Display video source
+        const videoSource = "{{ url_for('video_feed', source=request.args.get('source')) }}";
+        const videoElement = document.getElementById('video');
+        videoElement.src = videoSource;
+    </script>
+
+</body>
+
+</html>
